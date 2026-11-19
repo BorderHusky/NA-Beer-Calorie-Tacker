@@ -43,7 +43,7 @@ details summary{cursor:pointer;font-weight:600}
 <main>
 <h1>Calories not consumed</h1>
 <div class="big"><span id="total">0</span><small>kcal</small></div>
-<div class="sub" id="equiv">Log your first Guinness 0.0 to start the count.</div>
+<div class="sub" id="equiv">Log your first swap to start the count.</div>
 
 <div class="grid">
 <div class="stat"><b id="drinks">0</b><span>drinks swapped</span></div>
@@ -82,6 +82,7 @@ details summary{cursor:pointer;font-weight:600}
 
 <details class="card">
 <summary>Swaps and calorie settings</summary>
+<div class="row"><div><label for="refname">Headline beer</label><input id="refname"></div><div><label for="refkcal">kcal per can</label><input id="refkcal" type="number" step="1" inputmode="decimal"></div></div>
 <div id="pairs"></div>
 <button class="go" id="addpair" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">Add a swap</button>
 <div class="note">Calories are per 100 ml. The starting figures for IPA, lager and the generic NA beers are rough typical values, so check them against your actual cans and edit here. Guinness (35 and 16) comes from published UK figures. Changes apply to new entries only. Data is saved in this browser on this device.</div>
@@ -92,7 +93,7 @@ details summary{cursor:pointer;font-weight:600}
 var KEY="guinness-saver-v2",OLD="guinness-saver-v1";
 var S={pairs:[
 {id:"p1",beer:"Guinness Draught",na:"Guinness 0.0",kb:35,kn:16},
-{id:"p2",beer:"IPA",na:"NA IPA",kb:48,kn:20},
+{id:"p2",beer:"Voodoo Ranger Juicy Haze",na:"NA IPA",kb:55,kn:20},
 {id:"p3",beer:"Lager",na:"NA lager",kb:40,kn:15},
 {id:"p4",beer:"Porter or stout",na:"Guinness 0.0",kb:40,kn:16}
 ],log:[],sel:"p1"};
@@ -100,6 +101,8 @@ try{var r=localStorage.getItem(KEY);
 if(r){var p=JSON.parse(r);if(p&&p.pairs&&p.log)S=p;}
 else{var o=localStorage.getItem(OLD);if(o){var q=JSON.parse(o);if(q&&q.log)S.log=q.log.map(function(e){e.pair="Guinness Draught";return e;});}}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+if(!S.ref)S.ref={name:"Voodoo Ranger Juicy Haze",kcal:240};
+S.pairs.forEach(function(p){if(p.id==="p2"&&p.beer==="IPA"&&p.kb===48&&p.na==="NA IPA"){p.beer="Voodoo Ranger Juicy Haze";p.kb=55;}});
 var $=function(i){return document.getElementById(i)};
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function iso(d){var z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
@@ -120,7 +123,7 @@ S.log.forEach(function(e){var dt=parse(e.date),age=(t0-dt)/864e5;tot+=e.kcal;n+=
 if(age>=0&&age<7)wk+=e.kcal;if(dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear())mo+=e.kcal;});
 $("total").textContent=tot.toLocaleString("en-GB");$("drinks").textContent=n;
 $("week").textContent=wk.toLocaleString("en-GB");$("month").textContent=mo.toLocaleString("en-GB");
-if(tot>0){$("equiv").textContent="About "+(tot/270).toFixed(1)+" slices of pizza you didn\u2019t eat, or "+Math.round(tot/60)+" minutes of jogging you didn\u2019t need.";}
+if(tot>0){$("equiv").textContent="That\u2019s "+(tot/S.ref.kcal).toFixed(1)+" cans of "+S.ref.name+" you didn\u2019t drink.";}
 var wks=[],i;for(i=7;i>=0;i--)wks.push({s:new Date(t0.getTime()-((t0.getDay()+6)%7)*864e5-i*7*864e5),v:0});
 S.log.forEach(function(e){var dt=parse(e.date);wks.forEach(function(w){var d=(dt-w.s)/864e5;if(d>=0&&d<7)w.v+=e.kcal;});});
 var mx=Math.max.apply(null,wks.map(function(w){return w.v}).concat([1]));
@@ -143,6 +146,8 @@ save();preview();var o=$("pair").querySelector('option[value="'+id+'"]');if(o)o.
 $("pairs").onclick=function(ev){var id=ev.target.getAttribute&&ev.target.getAttribute("data-rm");if(!id||S.pairs.length<2)return;
 S.pairs=S.pairs.filter(function(p){return p.id!==id});if(S.sel===id)S.sel=S.pairs[0].id;save();fillPairs();preview();};
 $("addpair").onclick=function(){var id="p"+Date.now();S.pairs.push({id:id,beer:"New beer",na:"New NA beer",kb:40,kn:15});S.sel=id;save();fillPairs();preview();};
+$("refname").value=S.ref.name;$("refkcal").value=S.ref.kcal;
+$("refname").oninput=$("refkcal").oninput=function(){var k=parseFloat($("refkcal").value);if($("refname").value)S.ref.name=$("refname").value;if(k>0)S.ref.kcal=k;save();render();};
 fillPairs();render();
 })();
 </script>
